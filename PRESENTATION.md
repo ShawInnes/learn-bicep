@@ -2,29 +2,49 @@
 marp: true
 title: Intro to Bicep
 author: Shaw Innes
+paginate: true
+footer: Intro to Bicep
+theme: default
 ---
 
-# Azure Bicep
+<style>
+section {
+  background: #000000;
+  color: #cccccc;
+}
+h1,
+h2,
+h3 {
+  color: #90C226
+}
+
+</style>
+
+# <!-- fit --> Introduction to Bicep :muscle:
 
 ---
-
 
 # Intro
 
 - Background
-- Alternatives – ARM, PowerShell, az-cli, Terraform
+- Other Tools
 - Resources
 - Demo
-- Challenges – FW rules to access DB etc
 - Summary
 
 ---
 
 # What is Bicep?
 
-@startuml
-Bob -> Alice : hello
-@enduml
+> Bicep is a domain-specific language (DSL) that uses declarative syntax to deploy Azure resources.
+
+---
+
+# Comparison to other tools
+
+## Bicep 
+
+Uses the Resource Manager API, As soon as a resource provider introduces new resources types and API versions, you can use them in your Bicep file
 
 ---
 
@@ -32,23 +52,46 @@ Bob -> Alice : hello
 
 ## az-cli / Powershell
 
-## ARM
-
-Complex, Limited
-
-## Terraform
-
-Stateful, Idempontent, Providers, Provider Support
-
+:white_check_mark: Low barrier to entry
+:x: Not Idempontent
+:x: Terrible to source control
+:x: az-cli is constantly changing
 
 ---
 
-# Scopes
+# Comparison to other tools
 
-- Tenant
-- Subscription
-- Management Group
-- Resource Group
+## ARM
+
+:white_check_mark: Azure default tool
+:x: Complex DSL
+:x: Limited logic
+:x: Horrible to version control & diff
+
+---
+
+# Comparison to other tools
+
+## Terraform
+
+:white_check_mark: Cleaner DSL than ARM
+:interrobang: Stateful
+:white_check_mark: Idempontent
+:white_check_mark: Multiple Platform Providers
+:x: Questionable Support, often lags for Azure
+
+---
+
+# What-If 
+
+---
+
+# Create
+
+## Mode 
+
+1 Complete
+1 Incremental
 
 ---
 
@@ -67,8 +110,43 @@ resource dnsZoneDemo 'Microsoft.Network/dnsZones@2018-05-01' = {
 
 ```
 resource dnsZoneDemo 'Microsoft.Network/dnsZones@2018-05-01' = {
-  name: 'bicepdemo.com'
+  name: 'bicep.shawinnes.com'
   location: 'global'
+
+  resource dnsARecord 'A' = {
+    name: '@'
+    properties: {
+      TTL: 3600
+      ARecords: [
+        {
+          ipv4Address: '127.0.0.1'
+        }
+      ]
+    }
+  }
+}
+```
+
+---
+
+# Existing Resources 
+
+```
+resource dnsZone 'Microsoft.Network/dnsZones@2018-05-01' existing = {
+  name: 'bicep.shawinnes.com'
+}
+
+resource dnsRecord 'Microsoft.Network/dnsZones/A@2018-05-01' = {
+  parent: dnsZone
+  name: 'blog'
+  properties: {
+    TTL: 3600
+    ARecords: [
+      {
+        ipv4Address: '127.0.0.1'
+      }
+    ]
+  }
 }
 ```
 
@@ -77,39 +155,78 @@ resource dnsZoneDemo 'Microsoft.Network/dnsZones@2018-05-01' = {
 # Outputs
 
 ```
-resource dnsZoneDemo 'Microsoft.Network/dnsZones@2018-05-01' = {
-  name: 'bicepdemo.com'
-  location: 'global'
-}
-
-output DemoNameServers array = dnsZoneDemo.properties.nameServers
-```
-
----
-
-
-# Existing Resources 
-
-```
 resource dnsZone 'Microsoft.Network/dnsZones@2018-05-01' existing = {
-  name: 'shawinnes.com'
+  name: 'bicep.shawinnes.com'
 }
 
+output NameServers array = dnsZoneDemo.properties.nameServers
 ```
 
 ---
 
-# What-If 
+# Parameters
+
+```
+@allowed([
+  'blog'
+  'www'
+  'mail'
+])
+param record string
+
+resource dnsZoneDemo 'Microsoft.Network/dnsZones@2018-05-01' = {
+  name: 'bicep.shawinnes.com'
+  location: 'global'
+
+  resource dnsARecord 'A' = {
+    name: record
+    properties: {
+      TTL: 3600
+      ARecords: [
+        {
+          ipv4Address: '127.0.0.1'
+        }
+      ]
+    }
+  }
+}
+```
 
 ---
 
-# Create
+# Loops
 
-## Mode 
+```
+param servers object = {
+  srv01: {
+    name: 'srv01'
+    address: '10.0.1.1'
+    enabled: true
+  }
+  srv02: {
+    name: 'srv02'
+    address: '10.0.1.2'
+    enabled: false
+  }
+}
 
-Complete
+resource dnsZone 'Microsoft.Network/dnsZones@2018-05-01' existing = {
+  name: 'bicep.shawinnes.com'
+}
 
-Incremental
+resource dnsRecord 'Microsoft.Network/dnsZones/A@2018-05-01' = [for server in items(servers): if (server.value.enabled) {
+  parent: dnsZone
+  name: server.key // or server.value.name
+  properties: {
+    TTL: 3600
+    ARecords: [
+      {
+        ipv4Address: server.value.address
+      }
+    ]
+  }
+}]
+```
 
 ---
 
@@ -118,6 +235,15 @@ Incremental
 * VS Code Plugins
 * Resource Groups
 * Resources
+
+---
+
+# Scopes
+
+- Tenant
+- Subscription
+- Management Group
+- Resource Group
 
 --- 
 
