@@ -2,8 +2,7 @@
 # Deploying
 
 ```bash
-az group create --name bicep-test-rg --location "West US 2"
-
+az group create --name bicep-test-rg --location "Australia East"
 az deployment group create -f ./main.bicep -g bicep-test-rg
 ```
 
@@ -24,4 +23,10 @@ az rest --method post --url /subscriptions/$AZURE_SUBSCRIPTION_ID/resourcegroups
 az deployment mg create --location australiaeast --management-group-id default-mg --template-file policy.bicep
 az deployment sub create --location australiaeast --template-file tag-policy.bicep --verbose  
 
+```
+
+
+```
+az deployment sub what-if --name bicepdemo --location AustraliaEast --template-file main.bicep
+az deployment sub create --name bicepdemo --location AustraliaEast --template-file main.bicep
 ```
