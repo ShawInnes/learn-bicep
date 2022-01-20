@@ -12,6 +12,11 @@ section {
   background: #000000;
   color: #cccccc;
 }
+
+section pre {
+  background: #333333
+}
+
 h1,
 h2,
 h3 {
@@ -82,16 +87,14 @@ Uses the Resource Manager API, As soon as a resource provider introduces new res
 
 ---
 
-# What-If 
+# Applying Changes
 
----
+## What-If & Create 
 
-# Create
+### Modes
 
-## Mode 
-
-1 Complete
-1 Incremental
+1. Complete
+1. Incremental
 
 ---
 
@@ -230,11 +233,7 @@ resource dnsRecord 'Microsoft.Network/dnsZones/A@2018-05-01' = [for server in it
 
 ---
 
-# Demo 
-
-* VS Code Plugins
-* Resource Groups
-* Resources
+# <!-- fit --> :muscle: DEMO
 
 ---
 
@@ -248,6 +247,8 @@ resource dnsRecord 'Microsoft.Network/dnsZones/A@2018-05-01' = [for server in it
 --- 
 
 # Links
+
+* VS Code Plugins
 
 https://docs.microsoft.com/en-us/azure/azure-resource-manager/bicep/overview
 
