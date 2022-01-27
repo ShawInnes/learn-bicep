@@ -51,6 +51,13 @@ h3 {
 
 Uses the Resource Manager API, As soon as a resource provider introduces new resources types and API versions, you can use them in your Bicep file
 
+
+:white_check_mark: Cleaner DSL than ARM
+:white_check_mark: Idempontent
+:white_check_mark: Stateless
+:x: Does NOT support AzureAD
+:x: Only works for Azure
+
 ---
 
 # Comparison to other tools
@@ -58,9 +65,11 @@ Uses the Resource Manager API, As soon as a resource provider introduces new res
 ## az-cli / Powershell
 
 :white_check_mark: Low barrier to entry
+:white_check_mark: Supports AzureAD
 :x: Not Idempontent
 :x: Terrible to source control
 :x: az-cli is constantly changing
+:x: Only works for Azure
 
 ---
 
@@ -69,9 +78,45 @@ Uses the Resource Manager API, As soon as a resource provider introduces new res
 ## ARM
 
 :white_check_mark: Azure default tool
-:x: Complex DSL
+:x: Does NOT support AzureAD
+:x: Complex DSL (JSON), generally monolithic
 :x: Limited logic
 :x: Horrible to version control & diff
+:x: Only works for Azure
+
+---
+
+# ARM Sample
+
+```
+{
+  "name": "ubuntuVM1",
+  "type": "Microsoft.Compute/virtualMachines",
+  "apiVersion": "2019-07-01",
+  "location": "[resourceGroup().location]",
+  "properties": {
+    "hardwareProfile": {
+      "vmSize": "Standard_A2_v2"
+    },
+    "osProfile": {
+      "computerName": "ubuntuVM1",
+      "adminUsername": "adminUsername",
+      "adminPassword": "adminPassword123"
+    },
+    "storageProfile": {
+      "imageReference": {
+        "publisher": "Canonical",
+        "offer": "UbuntuServer",
+        "sku": "16.04-LTS",
+        "version": "latest"
+      },
+      "osDisk": {
+        "name": "ubuntuVM1-OSDisk",
+        "caching": "ReadWrite",
+        "createOption": "FromImage"
+      }
+    },
+```
 
 ---
 
@@ -79,19 +124,62 @@ Uses the Resource Manager API, As soon as a resource provider introduces new res
 
 ## Terraform
 
-:white_check_mark: Cleaner DSL than ARM
-:interrobang: Stateful
+:white_check_mark: Cleaner DSL (HCL) than ARM
 :white_check_mark: Idempontent
 :white_check_mark: Multiple Platform Providers
+:white_check_mark: Works with AzureAD
+:interrobang: Stateful
 :x: Questionable Support, often lags for Azure
 
 ---
 
-# Applying Changes
+# Terraform Sample
 
-## What-If & Create 
+```
+resource "azurerm_linux_virtual_machine" "example" {
+  name                            = "ubuntuVM1"
+  resource_group_name             = azurerm_resource_group.example.name
+  location                        = azurerm_resource_group.example.location
+  size                            = "Standard_F2"
+  admin_username                  = "adminUsername"
+  admin_password                  = "adminPassword123"
+  disable_password_authentication = false
 
-### Modes
+  network_interface_ids = [
+    azurerm_network_interface.example.id,
+  ]
+
+  os_disk {
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+
+  source_image_reference {
+    publisher = "Canonical"
+    offer     = "UbuntuServer"
+    sku       = "16.04-LTS"
+    version   = "latest"
+  }
+}
+```
+
+---
+
+# Testing & Applying Changes
+
+## Deployment What-If  
+
+```bash
+az deployment group what-if --mode Incremental ...
+```
+
+## Deployment Create
+
+```bash
+az deployment group create --mode Incremental ...
+```
+
+### Modes :warning:
 
 1. Complete
 1. Incremental
@@ -102,7 +190,7 @@ Uses the Resource Manager API, As soon as a resource provider introduces new res
 
 ```
 resource dnsZoneDemo 'Microsoft.Network/dnsZones@2018-05-01' = {
-  name: 'shawinnes.com'
+  name: 'bicep.shawinnes.com'
   location: 'global'
 }
 ```
